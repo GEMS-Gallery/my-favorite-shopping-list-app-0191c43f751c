@@ -1,17 +1,22 @@
 export const idlFactory = ({ IDL }) => {
-  const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text });
   const Time = IDL.Int;
+  const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text });
   const ShoppingItem = IDL.Record({
     'id' : IDL.Nat,
     'createdAt' : Time,
     'text' : IDL.Text,
     'completed' : IDL.Bool,
+    'dueDate' : IDL.Opt(Time),
     'description' : IDL.Text,
   });
   return IDL.Service({
-    'addItem' : IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
+    'addItem' : IDL.Func([IDL.Text, IDL.Text, IDL.Opt(Time)], [IDL.Nat], []),
     'deleteItem' : IDL.Func([IDL.Nat], [Result], []),
-    'editItem' : IDL.Func([IDL.Nat, IDL.Text, IDL.Text], [Result], []),
+    'editItem' : IDL.Func(
+        [IDL.Nat, IDL.Text, IDL.Text, IDL.Opt(Time)],
+        [Result],
+        [],
+      ),
     'getItems' : IDL.Func([], [IDL.Vec(ShoppingItem)], ['query']),
     'markItemCompleted' : IDL.Func([IDL.Nat], [Result], []),
   });

@@ -9,18 +9,21 @@ interface ShoppingItem {
   description: string;
   completed: boolean;
   createdAt: bigint;
+  dueDate: bigint | null;
 }
 
 const App: React.FC = () => {
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [newItem, setNewItem] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  const [newDueDate, setNewDueDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<ShoppingItem | null>(null);
   const [editText, setEditText] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [editDueDate, setEditDueDate] = useState('');
 
   useEffect(() => {
     fetchItems();
@@ -41,9 +44,11 @@ const App: React.FC = () => {
     if (newItem.trim() === '') return;
     setActionLoading(true);
     try {
-      await backend.addItem(newItem, newDescription);
+      const dueDateTimestamp = newDueDate ? BigInt(new Date(newDueDate).getTime()) : null;
+      await backend.addItem(newItem, newDescription, dueDateTimestamp);
       setNewItem('');
       setNewDescription('');
+      setNewDueDate('');
       await fetchItems();
     } catch (error) {
       console.error('Error adding item:', error);
@@ -77,6 +82,7 @@ const App: React.FC = () => {
     setEditItem(item);
     setEditText(item.text);
     setEditDescription(item.description);
+    setEditDueDate(item.dueDate ? new Date(Number(item.dueDate)).toISOString().split('T')[0] : '');
     setEditDialogOpen(true);
   };
 
@@ -84,7 +90,8 @@ const App: React.FC = () => {
     if (!editItem) return;
     setActionLoading(true);
     try {
-      await backend.editItem(editItem.id, editText, editDescription);
+      const dueDateTimestamp = editDueDate ? BigInt(new Date(editDueDate).getTime()) : null;
+      await backend.editItem(editItem.id, editText, editDescription, dueDateTimestamp);
       await fetchItems();
       setEditDialogOpen(false);
     } catch (error) {
@@ -123,6 +130,16 @@ const App: React.FC = () => {
           onChange={(e) => setNewDescription(e.target.value)}
           sx={{ mb: 1 }}
         />
+        <TextField
+          fullWidth
+          variant="outlined"
+          label="Due Date"
+          type="date"
+          value={newDueDate}
+          onChange={(e) => setNewDueDate(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          sx={{ mb: 1 }}
+        />
         <Button
           variant="contained"
           color="primary"
@@ -141,7 +158,16 @@ const App: React.FC = () => {
             </ListItemIcon>
             <ListItemText 
               primary={item.text} 
-              secondary={item.description}
+              secondary={
+                <>
+                  {item.description}
+                  {item.dueDate && (
+                    <Typography component="span" variant="body2" color="textSecondary">
+                      {' | Due: '}{new Date(Number(item.dueDate)).toLocaleDateString()}
+                    </Typography>
+                  )}
+                </>
+              }
               sx={{ textDecoration: item.completed ? 'line-through' : 'none' }} 
             />
             <ListItemSecondaryAction>
@@ -177,6 +203,15 @@ const App: React.FC = () => {
             fullWidth
             value={editDescription}
             onChange={(e) => setEditDescription(e.target.value)}
+          />
+          <TextField
+            margin="dense"
+            label="Due Date"
+            type="date"
+            fullWidth
+            value={editDueDate}
+            onChange={(e) => setEditDueDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
           />
         </DialogContent>
         <DialogActions>

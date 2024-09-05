@@ -9,13 +9,14 @@ export interface ShoppingItem {
   'createdAt' : Time,
   'text' : string,
   'completed' : boolean,
+  'dueDate' : [] | [Time],
   'description' : string,
 }
 export type Time = bigint;
 export interface _SERVICE {
-  'addItem' : ActorMethod<[string, string], bigint>,
+  'addItem' : ActorMethod<[string, string, [] | [Time]], bigint>,
   'deleteItem' : ActorMethod<[bigint], Result>,
-  'editItem' : ActorMethod<[bigint, string, string], Result>,
+  'editItem' : ActorMethod<[bigint, string, string, [] | [Time]], Result>,
   'getItems' : ActorMethod<[], Array<ShoppingItem>>,
   'markItemCompleted' : ActorMethod<[bigint], Result>,
 }

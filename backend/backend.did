@@ -4,6 +4,7 @@ type ShoppingItem =
    completed: bool;
    createdAt: Time;
    description: text;
+   dueDate: opt Time;
    id: nat;
    "text": text;
  };
@@ -13,9 +14,9 @@ type Result =
    ok;
  };
 service : {
-  addItem: (text, text) -> (nat);
+  addItem: (text, text, opt Time) -> (nat);
   deleteItem: (nat) -> (Result);
-  editItem: (nat, text, text) -> (Result);
+  editItem: (nat, text, text, opt Time) -> (Result);
   getItems: () -> (vec ShoppingItem) query;
   markItemCompleted: (nat) -> (Result);
 }

@@ -14,12 +14,13 @@ actor {
     description: Text;
     completed: Bool;
     createdAt: Time.Time;
+    dueDate: ?Time.Time;
   };
 
   stable var items : [ShoppingItem] = [];
   stable var nextId : Nat = 0;
 
-  public func addItem(text: Text, description: Text) : async Nat {
+  public func addItem(text: Text, description: Text, dueDate: ?Time.Time) : async Nat {
     let id = nextId;
     let item : ShoppingItem = {
       id = id;
@@ -27,6 +28,7 @@ actor {
       description = description;
       completed = false;
       createdAt = Time.now();
+      dueDate = dueDate;
     };
     items := Array.append(items, [item]);
     nextId += 1;
@@ -39,7 +41,7 @@ actor {
 
   public func markItemCompleted(id: Nat) : async Result.Result<(), Text> {
     let index = Array.indexOf<ShoppingItem>(
-      { id = id; text = ""; description = ""; completed = false; createdAt = 0 },
+      { id = id; text = ""; description = ""; completed = false; createdAt = 0; dueDate = null },
       items,
       func(a, b) { a.id == b.id }
     );
@@ -52,6 +54,7 @@ actor {
           description = items[i].description;
           completed = true;
           createdAt = items[i].createdAt;
+          dueDate = items[i].dueDate;
         };
         items := Array.tabulate<ShoppingItem>(items.size(), func (j) {
           if (j == i) { updatedItem } else { items[j] }
@@ -71,9 +74,9 @@ actor {
     }
   };
 
-  public func editItem(id: Nat, newText: Text, newDescription: Text) : async Result.Result<(), Text> {
+  public func editItem(id: Nat, newText: Text, newDescription: Text, newDueDate: ?Time.Time) : async Result.Result<(), Text> {
     let index = Array.indexOf<ShoppingItem>(
-      { id = id; text = ""; description = ""; completed = false; createdAt = 0 },
+      { id = id; text = ""; description = ""; completed = false; createdAt = 0; dueDate = null },
       items,
       func(a, b) { a.id == b.id }
     );
@@ -86,6 +89,7 @@ actor {
           description = newDescription;
           completed = items[i].completed;
           createdAt = items[i].createdAt;
+          dueDate = newDueDate;
         };
         items := Array.tabulate<ShoppingItem>(items.size(), func (j) {
           if (j == i) { updatedItem } else { items[j] }
