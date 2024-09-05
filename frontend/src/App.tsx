@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { backend } from 'declarations/backend';
-import { Container, Typography, TextField, Button, List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction, IconButton, CircularProgress, Box } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon, CheckCircle as CheckCircleIcon, RadioButtonUnchecked as RadioButtonUncheckedIcon } from '@mui/icons-material';
+import { Container, Typography, TextField, Button, List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction, IconButton, CircularProgress, Box, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Add as AddIcon, Delete as DeleteIcon, CheckCircle as CheckCircleIcon, RadioButtonUnchecked as RadioButtonUncheckedIcon, Edit as EditIcon } from '@mui/icons-material';
 
 interface ShoppingItem {
   id: bigint;
   text: string;
+  description: string;
   completed: boolean;
   createdAt: bigint;
 }
@@ -13,8 +14,13 @@ interface ShoppingItem {
 const App: React.FC = () => {
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [newItem, setNewItem] = useState('');
+  const [newDescription, setNewDescription] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editItem, setEditItem] = useState<ShoppingItem | null>(null);
+  const [editText, setEditText] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
   useEffect(() => {
     fetchItems();
@@ -35,8 +41,9 @@ const App: React.FC = () => {
     if (newItem.trim() === '') return;
     setActionLoading(true);
     try {
-      await backend.addItem(newItem);
+      await backend.addItem(newItem, newDescription);
       setNewItem('');
+      setNewDescription('');
       await fetchItems();
     } catch (error) {
       console.error('Error adding item:', error);
@@ -66,6 +73,26 @@ const App: React.FC = () => {
     setActionLoading(false);
   };
 
+  const handleEditClick = (item: ShoppingItem) => {
+    setEditItem(item);
+    setEditText(item.text);
+    setEditDescription(item.description);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editItem) return;
+    setActionLoading(true);
+    try {
+      await backend.editItem(editItem.id, editText, editDescription);
+      await fetchItems();
+      setEditDialogOpen(false);
+    } catch (error) {
+      console.error('Error editing item:', error);
+    }
+    setActionLoading(false);
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
@@ -79,14 +106,22 @@ const App: React.FC = () => {
       <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 4, mb: 2 }}>
         Shopping List
       </Typography>
-      <Box sx={{ display: 'flex', mb: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2 }}>
         <TextField
           fullWidth
           variant="outlined"
           label="Add new item"
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleAddItem()}
+          sx={{ mb: 1 }}
+        />
+        <TextField
+          fullWidth
+          variant="outlined"
+          label="Description"
+          value={newDescription}
+          onChange={(e) => setNewDescription(e.target.value)}
+          sx={{ mb: 1 }}
         />
         <Button
           variant="contained"
@@ -94,7 +129,6 @@ const App: React.FC = () => {
           startIcon={<AddIcon />}
           onClick={handleAddItem}
           disabled={actionLoading}
-          sx={{ ml: 1 }}
         >
           Add
         </Button>
@@ -105,9 +139,16 @@ const App: React.FC = () => {
             <ListItemIcon>
               {item.completed ? <CheckCircleIcon color="primary" /> : <RadioButtonUncheckedIcon />}
             </ListItemIcon>
-            <ListItemText primary={item.text} sx={{ textDecoration: item.completed ? 'line-through' : 'none' }} />
+            <ListItemText 
+              primary={item.text} 
+              secondary={item.description}
+              sx={{ textDecoration: item.completed ? 'line-through' : 'none' }} 
+            />
             <ListItemSecondaryAction>
-              <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteItem(item.id)} disabled={actionLoading}>
+              <IconButton edge="end" aria-label="edit" onClick={(e) => { e.stopPropagation(); handleEditClick(item); }} disabled={actionLoading}>
+                <EditIcon />
+              </IconButton>
+              <IconButton edge="end" aria-label="delete" onClick={(e) => { e.stopPropagation(); handleDeleteItem(item.id); }} disabled={actionLoading}>
                 <DeleteIcon />
               </IconButton>
             </ListItemSecondaryAction>
@@ -119,6 +160,30 @@ const App: React.FC = () => {
           <CircularProgress size={24} />
         </Box>
       )}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
+        <DialogTitle>Edit Item</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Item"
+            fullWidth
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+          />
+          <TextField
+            margin="dense"
+            label="Description"
+            fullWidth
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleEditSave} color="primary">Save</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

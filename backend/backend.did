@@ -3,6 +3,7 @@ type ShoppingItem =
  record {
    completed: bool;
    createdAt: Time;
+   description: text;
    id: nat;
    "text": text;
  };
@@ -12,8 +13,9 @@ type Result =
    ok;
  };
 service : {
-  addItem: (text) -> (nat);
+  addItem: (text, text) -> (nat);
   deleteItem: (nat) -> (Result);
+  editItem: (nat, text, text) -> (Result);
   getItems: () -> (vec ShoppingItem) query;
   markItemCompleted: (nat) -> (Result);
 }

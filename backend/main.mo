@@ -11,6 +11,7 @@ actor {
   type ShoppingItem = {
     id: Nat;
     text: Text;
+    description: Text;
     completed: Bool;
     createdAt: Time.Time;
   };
@@ -18,11 +19,12 @@ actor {
   stable var items : [ShoppingItem] = [];
   stable var nextId : Nat = 0;
 
-  public func addItem(text: Text) : async Nat {
+  public func addItem(text: Text, description: Text) : async Nat {
     let id = nextId;
     let item : ShoppingItem = {
       id = id;
       text = text;
+      description = description;
       completed = false;
       createdAt = Time.now();
     };
@@ -37,7 +39,7 @@ actor {
 
   public func markItemCompleted(id: Nat) : async Result.Result<(), Text> {
     let index = Array.indexOf<ShoppingItem>(
-      { id = id; text = ""; completed = false; createdAt = 0 },
+      { id = id; text = ""; description = ""; completed = false; createdAt = 0 },
       items,
       func(a, b) { a.id == b.id }
     );
@@ -47,6 +49,7 @@ actor {
         let updatedItem = {
           id = items[i].id;
           text = items[i].text;
+          description = items[i].description;
           completed = true;
           createdAt = items[i].createdAt;
         };
@@ -65,6 +68,30 @@ actor {
     } else {
       items := newItems;
       #ok()
+    }
+  };
+
+  public func editItem(id: Nat, newText: Text, newDescription: Text) : async Result.Result<(), Text> {
+    let index = Array.indexOf<ShoppingItem>(
+      { id = id; text = ""; description = ""; completed = false; createdAt = 0 },
+      items,
+      func(a, b) { a.id == b.id }
+    );
+    switch (index) {
+      case null { #err("Item not found") };
+      case (?i) {
+        let updatedItem = {
+          id = items[i].id;
+          text = newText;
+          description = newDescription;
+          completed = items[i].completed;
+          createdAt = items[i].createdAt;
+        };
+        items := Array.tabulate<ShoppingItem>(items.size(), func (j) {
+          if (j == i) { updatedItem } else { items[j] }
+        });
+        #ok()
+      };
     }
   };
 }
