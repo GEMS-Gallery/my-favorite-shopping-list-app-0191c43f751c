@@ -1,0 +1,19 @@
+type Time = int;
+type ShoppingItem = 
+ record {
+   completed: bool;
+   createdAt: Time;
+   id: nat;
+   "text": text;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok;
+ };
+service : {
+  addItem: (text) -> (nat);
+  deleteItem: (nat) -> (Result);
+  getItems: () -> (vec ShoppingItem) query;
+  markItemCompleted: (nat) -> (Result);
+}
