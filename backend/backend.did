@@ -8,13 +8,18 @@ type ShoppingItem =
    id: nat;
    "text": text;
  };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: nat;
+ };
 type Result = 
  variant {
    err: text;
    ok;
  };
 service : {
-  addItem: (text, text, opt Time) -> (nat);
+  addItem: (text, text, opt Time) -> (Result_1);
   deleteItem: (nat) -> (Result);
   editItem: (nat, text, text, opt Time) -> (Result);
   getItems: () -> (vec ShoppingItem) query;

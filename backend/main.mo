@@ -6,6 +6,7 @@ import List "mo:base/List";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Result "mo:base/Result";
+import Debug "mo:base/Debug";
 
 actor {
   type ShoppingItem = {
@@ -20,7 +21,7 @@ actor {
   stable var items : [ShoppingItem] = [];
   stable var nextId : Nat = 0;
 
-  public func addItem(text: Text, description: Text, dueDate: ?Time.Time) : async Nat {
+  public func addItem(text: Text, description: Text, dueDate: ?Time.Time) : async Result.Result<Nat, Text> {
     let id = nextId;
     let item : ShoppingItem = {
       id = id;
@@ -32,7 +33,8 @@ actor {
     };
     items := Array.append(items, [item]);
     nextId += 1;
-    id
+    Debug.print("Item added: " # debug_show(item));
+    #ok(id)
   };
 
   public query func getItems() : async [ShoppingItem] {

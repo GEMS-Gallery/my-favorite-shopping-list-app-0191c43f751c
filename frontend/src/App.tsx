@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { backend } from 'declarations/backend';
-import { Container, Typography, TextField, Button, List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction, IconButton, CircularProgress, Box, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Container, Typography, TextField, Button, List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction, IconButton, CircularProgress, Box, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon, CheckCircle as CheckCircleIcon, RadioButtonUnchecked as RadioButtonUncheckedIcon, Edit as EditIcon } from '@mui/icons-material';
 
 interface ShoppingItem {
@@ -24,6 +24,8 @@ const App: React.FC = () => {
   const [editText, setEditText] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
     fetchItems();
@@ -37,6 +39,7 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Error fetching items:', error);
       setLoading(false);
+      showSnackbar('Error fetching items');
     }
   };
 
@@ -45,13 +48,19 @@ const App: React.FC = () => {
     setActionLoading(true);
     try {
       const dueDateTimestamp = newDueDate ? BigInt(new Date(newDueDate).getTime()) : null;
-      await backend.addItem(newItem, newDescription, dueDateTimestamp);
-      setNewItem('');
-      setNewDescription('');
-      setNewDueDate('');
-      await fetchItems();
+      const result = await backend.addItem(newItem, newDescription, dueDateTimestamp);
+      if ('ok' in result) {
+        setNewItem('');
+        setNewDescription('');
+        setNewDueDate('');
+        await fetchItems();
+        showSnackbar('Item added successfully');
+      } else {
+        showSnackbar('Failed to add item');
+      }
     } catch (error) {
       console.error('Error adding item:', error);
+      showSnackbar('Error adding item');
     }
     setActionLoading(false);
   };
@@ -61,8 +70,10 @@ const App: React.FC = () => {
     try {
       await backend.markItemCompleted(id);
       await fetchItems();
+      showSnackbar('Item status updated');
     } catch (error) {
       console.error('Error toggling item:', error);
+      showSnackbar('Error updating item status');
     }
     setActionLoading(false);
   };
@@ -72,8 +83,10 @@ const App: React.FC = () => {
     try {
       await backend.deleteItem(id);
       await fetchItems();
+      showSnackbar('Item deleted');
     } catch (error) {
       console.error('Error deleting item:', error);
+      showSnackbar('Error deleting item');
     }
     setActionLoading(false);
   };
@@ -94,10 +107,17 @@ const App: React.FC = () => {
       await backend.editItem(editItem.id, editText, editDescription, dueDateTimestamp);
       await fetchItems();
       setEditDialogOpen(false);
+      showSnackbar('Item updated successfully');
     } catch (error) {
       console.error('Error editing item:', error);
+      showSnackbar('Error updating item');
     }
     setActionLoading(false);
+  };
+
+  const showSnackbar = (message: string) => {
+    setSnackbarMessage(message);
+    setSnackbarOpen(true);
   };
 
   if (loading) {
@@ -219,6 +239,12 @@ const App: React.FC = () => {
           <Button onClick={handleEditSave} color="primary">Save</Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarMessage}
+      />
     </Container>
   );
 };

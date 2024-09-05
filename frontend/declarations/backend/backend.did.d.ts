@@ -4,6 +4,8 @@ import type { IDL } from '@dfinity/candid';
 
 export type Result = { 'ok' : null } |
   { 'err' : string };
+export type Result_1 = { 'ok' : bigint } |
+  { 'err' : string };
 export interface ShoppingItem {
   'id' : bigint,
   'createdAt' : Time,
@@ -14,7 +16,7 @@ export interface ShoppingItem {
 }
 export type Time = bigint;
 export interface _SERVICE {
-  'addItem' : ActorMethod<[string, string, [] | [Time]], bigint>,
+  'addItem' : ActorMethod<[string, string, [] | [Time]], Result_1>,
   'deleteItem' : ActorMethod<[bigint], Result>,
   'editItem' : ActorMethod<[bigint, string, string, [] | [Time]], Result>,
   'getItems' : ActorMethod<[], Array<ShoppingItem>>,
